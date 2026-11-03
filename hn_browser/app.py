@@ -16,7 +16,7 @@ from hn_browser.feed import PRESETS, build_feed
 from hn_browser.format import age_label, domain_of, hn_item_url
 from hn_browser.hn_client import HackerNewsClient, ItemNotFound
 from hn_browser.snapshot import Snapshot, load_snapshot
-from hn_browser.thread import Thread, clean_html, prune_deleted
+from hn_browser.thread import Thread, clean_html, count_comments, prune_deleted
 
 PACKAGE_DIR = Path(__file__).parent
 SNAPSHOT_TTL_SECONDS = 180
@@ -61,6 +61,7 @@ def create_app(
     templates.env.filters["domain"] = domain_of
     templates.env.filters["hn_url"] = hn_item_url
     templates.env.filters["clean"] = clean_html
+    templates.env.filters["descendants"] = count_comments
 
     @app.get("/")
     async def root() -> RedirectResponse:

@@ -6,14 +6,15 @@
     <summary class="comment-head">
         <span class="author">{{ c.author or "[deleted]" }}</span>
         <span class="muted">{{ age(c.created_at) }}</span>
-        {% if c.children %}<span class="muted">· {{ c.children | length }} {{ "reply" if c.children | length == 1 else "replies" }}</span>{% endif %}
         <a class="muted perma" href="https://news.ycombinator.com/item?id={{ c.id }}" title="On Hacker News">#</a>
     </summary>
     <div class="comment-body">{% if c.text_html is none %}<p class="muted">[deleted]</p>{% else %}{{ c.text_html | clean | safe }}{% endif %}</div>
     {% if c.children %}
-    <div class="replies">
+    {% set n = c.children | descendants %}
+    <details class="replies" open>
+        <summary class="replies-toggle">{{ n }} {{ "reply" if n == 1 else "replies" }}</summary>
         {% for child in c.children %}{{ render_comment(child, depth + 1) }}{% endfor %}
-    </div>
+    </details>
     {% endif %}
 </details>
 {% endmacro %}

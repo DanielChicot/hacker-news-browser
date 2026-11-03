@@ -24,7 +24,9 @@ THREAD = Thread(
     story=Story(1, "Rust <b>rewrite</b> of grep", "https://www.example.com/x", "ann", 120, 3, NOW - 3 * HOUR),
     comments=[
         Comment(11, "bob", "<p>Top level <i>comment</i><script>alert(1)</script></p>", NOW - 2 * HOUR, [
-            Comment(12, "cat", "<p>A reply</p>", NOW - HOUR),
+            Comment(12, "cat", "<p>A reply</p>", NOW - HOUR, [
+                Comment(14, "dan", "<p>Nested reply</p>", NOW - HOUR),
+            ]),
         ]),
         Comment(13, "", None, NOW - HOUR),  # deleted leaf, should not render
     ],
@@ -116,3 +118,12 @@ def test_story_page_is_404_for_unknown_story(client):
 
 def test_story_page_rejects_non_numeric_id(client):
     assert client.get("/story/abc").status_code == 422
+
+
+def test_replies_fold_as_a_subtree_labelled_with_descendant_count(client):
+    html = client.get("/story/1").text
+
+    assert html.count('<details class="replies" open>') == 2
+    assert '<summary class="replies-toggle">2 replies</summary>' in html  # 12 and 14 under 11
+    assert '<summary class="replies-toggle">1 reply</summary>' in html  # 14 under 12
+    assert html.index("2 replies") < html.index("A reply") < html.index("1 reply") < html.index("Nested reply")
