@@ -14,8 +14,9 @@ from fastapi.templating import Jinja2Templates
 from hn_browser.cache import TtlCache
 from hn_browser.feed import PRESETS, build_feed
 from hn_browser.format import age_label, domain_of, hn_item_url
-from hn_browser.hn_client import HackerNewsClient
+from hn_browser.hn_client import HackerNewsClient, ItemNotFound
 from hn_browser.snapshot import Snapshot, load_snapshot
+from hn_browser.thread import Thread, clean_html, prune_deleted
 
 PACKAGE_DIR = Path(__file__).parent
 SNAPSHOT_TTL_SECONDS = 180
@@ -23,30 +24,35 @@ USER_AGENT = "hn-browser (personal, non-commercial; https://codeberg.org/DanielC
 DEFAULT_PRESET = "hot"
 
 SnapshotLoader = Callable[[], Awaitable[Snapshot]]
+ThreadLoader = Callable[[int], Awaitable[Thread]]
 
 
-def _live_loader(http: httpx.AsyncClient) -> SnapshotLoader:
+def _live_loaders(http: httpx.AsyncClient) -> tuple[SnapshotLoader, ThreadLoader]:
     client = HackerNewsClient(http)
     cache: TtlCache[Snapshot] = TtlCache(ttl_seconds=SNAPSHOT_TTL_SECONDS)
 
-    async def load() -> Snapshot:
+    async def load_feed() -> Snapshot:
         return await cache.get(lambda: load_snapshot(client, now=int(time.time())))
 
-    return load
+    return load_feed, client.thread
 
 
-def create_app(snapshot_loader: SnapshotLoader | None = None) -> FastAPI:
-    state: dict[str, SnapshotLoader] = {}
-    if snapshot_loader is not None:
-        state["load"] = snapshot_loader
+def create_app(
+    snapshot_loader: SnapshotLoader | None = None,
+    thread_loader: ThreadLoader | None = None,
+) -> FastAPI:
+    injected = snapshot_loader is not None and thread_loader is not None
+    state: dict[str, Callable] = {}
+    if injected:
+        state["load"], state["thread"] = snapshot_loader, thread_loader
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        if snapshot_loader is not None:
+        if injected:
             yield
             return
         async with httpx.AsyncClient(timeout=15, headers={"User-Agent": USER_AGENT}) as http:
-            state["load"] = _live_loader(http)
+            state["load"], state["thread"] = _live_loaders(http)
             yield
 
     app = FastAPI(title="HN Browser", lifespan=lifespan)
@@ -54,6 +60,7 @@ def create_app(snapshot_loader: SnapshotLoader | None = None) -> FastAPI:
     templates = Jinja2Templates(directory=PACKAGE_DIR / "templates")
     templates.env.filters["domain"] = domain_of
     templates.env.filters["hn_url"] = hn_item_url
+    templates.env.filters["clean"] = clean_html
 
     @app.get("/")
     async def root() -> RedirectResponse:
@@ -71,7 +78,27 @@ def create_app(snapshot_loader: SnapshotLoader | None = None) -> FastAPI:
             {
                 "feed": feed,
                 "presets": PRESETS.values(),
+                "active_preset": preset_key,
                 "age": lambda created_at: age_label(created_at, now=snapshot.now),
+            },
+        )
+
+    @app.get("/story/{story_id}", response_class=HTMLResponse)
+    async def story_page(request: Request, story_id: int) -> HTMLResponse:
+        try:
+            thread = await state["thread"](story_id)
+        except ItemNotFound:
+            raise HTTPException(status_code=404)
+        thread = Thread(thread.story, prune_deleted(thread.comments), thread.fetched_at)
+        now = thread.fetched_at
+        return templates.TemplateResponse(
+            request,
+            "story.html",
+            {
+                "thread": thread,
+                "presets": PRESETS.values(),
+                "active_preset": None,
+                "age": lambda created_at: age_label(created_at, now=now),
             },
         )
 

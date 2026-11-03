@@ -146,3 +146,32 @@ a { color: inherit; }
   .metric { grid-column: 2; text-align: left; display: flex; gap: 8px; align-items: baseline; }
   .metric-value { font-size: 16px; }
 }
+
+/* story page */
+.hero-story { padding: 36px 0 20px; }
+.hero-story .hero-tag { font-family: var(--mono); letter-spacing: 0.06em; text-transform: none; }
+.story-title { font-family: var(--body); font-weight: 800; font-size: clamp(24px, 4vw, 40px); line-height: 1.15; margin: 10px 0 10px; letter-spacing: -0.01em; }
+.story-title a { text-decoration: none; }
+.story-title a:hover { color: var(--accent); }
+.story-meta { font-size: 14px; }
+.story-meta a { color: var(--accent); font-weight: 600; }
+.thread { padding: 8px 0; }
+.comment { border-left: 2px solid var(--line); margin: 0 0 0 14px; padding-left: 14px; }
+.thread > .comment { margin-left: 0; padding: 10px 22px; border-left: 0; border-bottom: 1px solid var(--line); }
+.thread > .comment:last-child { border-bottom: 0; }
+.comment-head { cursor: pointer; list-style: none; display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; padding: 6px 0; color: var(--ink-dim); user-select: none; }
+.comment-head::-webkit-details-marker { display: none; }
+.comment-head::before { content: "▾"; font-size: 11px; color: var(--ink-faint); width: 12px; }
+.comment:not([open]) > .comment-head::before { content: "▸"; }
+.comment-head .author { font-weight: 700; color: var(--ink); }
+.comment-head .perma { margin-left: auto; text-decoration: none; }
+.comment-body { font-size: 15px; line-height: 1.55; max-width: 76ch; overflow-wrap: anywhere; }
+.comment-body p { margin: 0 0 10px; }
+.comment-body p:last-child { margin-bottom: 0; }
+.comment-body a { color: var(--accent); }
+.comment-body pre { background: var(--bg-3); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 10px 12px; overflow-x: auto; font-family: var(--mono); font-size: 13px; margin: 0 0 10px; }
+.comment-body code { font-family: var(--mono); font-size: 0.92em; }
+.replies { margin-top: 8px; }
+.depth-1 { border-left-color: rgba(255, 102, 0, 0.45); }
+.depth-2 { border-left-color: rgba(255, 102, 0, 0.3); }
+.depth-3 { border-left-color: var(--line-strong); }

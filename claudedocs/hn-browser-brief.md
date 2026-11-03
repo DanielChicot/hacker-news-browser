@@ -33,8 +33,9 @@ Each row shows: rank, title (links to the article), domain, points, comment coun
 (links to the HN thread), age, and the window-specific number that put it there
 (e.g. "39 comments in the last 6h").
 
-Out of scope for v1: accounts, voting, in-app comment reading, read tracking,
-keyword filters. "Recently viewed" and similar come later and will need either
+Out of scope for v1: accounts, voting, read tracking, keyword filters.
+In-app comment reading was added on 2026-11-03 as `/story/{id}` via Algolia's
+items endpoint. "Recently viewed" and similar come later and will need either
 localStorage (per browser) or a small store.
 
 ## Data flow

@@ -17,6 +17,11 @@ Personal, non-commercial use.
 | Top today | Stories from the last 24 hours by points |
 | Rising | Stories from the last 24 hours by points per hour of age (one hour floor) |
 
+Each story's comment count opens `/story/{id}`, a comments page rendered here
+from Algolia's `/items/{id}` tree. Comment bodies are sanitised to the small set
+of tags HN itself emits, deleted leaf comments are dropped, and every comment
+has a `#` link to its position on Hacker News.
+
 ## How a request is served
 
 ```mermaid
@@ -95,9 +100,10 @@ hn_browser/
   snapshot.py   one combined fetch of stories and recent comments
   feed.py       presets, stats, and Feed assembly
   cache.py      single-value TTL cache with stale-on-error
+  thread.py     comment tree model, HTML sanitiser, deleted-comment pruning
   format.py     display helpers (domain, age, HN links)
   app.py        FastAPI routes and wiring
-  templates/    Jinja2 page
+  templates/    Jinja2 pages (base layout, feed, story thread)
   static/       stylesheet and theme toggle
 tests/          pytest, parameterised where there are several cases
 ```

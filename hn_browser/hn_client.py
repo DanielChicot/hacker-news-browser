@@ -6,13 +6,30 @@ Algolia allows 10,000 requests per hour per IP, so comment paging is capped.
 
 from collections.abc import Iterable
 
+import time
+
 import httpx
 
 from hn_browser.ranking import Story
+from hn_browser.thread import Comment, Thread, count_comments
 
 ALGOLIA_BASE_URL = "https://hn.algolia.com/api/v1"
 PAGE_SIZE = 1000
 DEFAULT_MAX_COMMENT_PAGES = 6
+
+
+class ItemNotFound(LookupError):
+    pass
+
+
+def _comment_from_item(item: dict) -> Comment:
+    return Comment(
+        id=int(item["id"]),
+        author=item.get("author") or "",
+        text_html=item.get("text"),
+        created_at=int(item.get("created_at_i") or 0),
+        children=[_comment_from_item(c) for c in item.get("children", [])],
+    )
 
 
 def _story_from_hit(hit: dict) -> Story:
@@ -32,10 +49,27 @@ class HackerNewsClient:
         self._http = http
         self._base_url = base_url.rstrip("/")
 
-    async def _get(self, endpoint: str, params: dict) -> dict:
+    async def _get(self, endpoint: str, params: dict | None = None) -> dict:
         response = await self._http.get(f"{self._base_url}/{endpoint}", params=params)
+        if response.status_code == 404:
+            raise ItemNotFound(endpoint)
         response.raise_for_status()
         return response.json()
+
+    async def thread(self, story_id: int) -> Thread:
+        """A story with its full comment tree, from the items endpoint."""
+        item = await self._get(f"items/{story_id}")
+        comments = [_comment_from_item(c) for c in item.get("children", [])]
+        story = Story(
+            id=int(item["id"]),
+            title=item.get("title") or "(untitled)",
+            url=item.get("url") or None,
+            author=item.get("author") or "",
+            points=item.get("points") or 0,
+            num_comments=count_comments(comments),
+            created_at=int(item.get("created_at_i") or 0),
+        )
+        return Thread(story=story, comments=comments, fetched_at=int(time.time()))
 
     async def stories_since(self, since: int) -> list[Story]:
         """Stories created after `since` (epoch seconds).

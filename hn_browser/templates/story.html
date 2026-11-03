@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ thread.story.title }} · HN Browser{% endblock %}
+
+{% macro render_comment(c, depth) %}
+<details class="comment depth-{{ depth % 6 }}" open>
+    <summary class="comment-head">
+        <span class="author">{{ c.author or "[deleted]" }}</span>
+        <span class="muted">{{ age(c.created_at) }}</span>
+        {% if c.children %}<span class="muted">· {{ c.children | length }} {{ "reply" if c.children | length == 1 else "replies" }}</span>{% endif %}
+        <a class="muted perma" href="https://news.ycombinator.com/item?id={{ c.id }}" title="On Hacker News">#</a>
+    </summary>
+    <div class="comment-body">{% if c.text_html is none %}<p class="muted">[deleted]</p>{% else %}{{ c.text_html | clean | safe }}{% endif %}</div>
+    {% if c.children %}
+    <div class="replies">
+        {% for child in c.children %}{{ render_comment(child, depth + 1) }}{% endfor %}
+    </div>
+    {% endif %}
+</details>
+{% endmacro %}
+
+{% block content %}
+    <header class="hero hero-story">
+        <div class="wrap">
+            <span class="hero-tag">{{ thread.story.url | domain }}</span>
+            <h1 class="story-title"><a href="{{ thread.story.url or ('https://news.ycombinator.com/item?id=' ~ thread.story.id) }}">{{ thread.story.title }}</a></h1>
+            <div class="meta story-meta">
+                <span>{{ thread.story.points }} points</span>
+                <span>{{ thread.story.num_comments }} comments</span>
+                <span>{{ age(thread.story.created_at) }}</span>
+                <span>by {{ thread.story.author }}</span>
+                <a href="https://news.ycombinator.com/item?id={{ thread.story.id }}">Open on Hacker News ↗</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <section class="panel thread">
+            {% for c in thread.comments %}{{ render_comment(c, 0) }}{% else %}<p class="empty">No comments yet.</p>{% endfor %}
+        </section>
+    </main>
+{% endblock %}

@@ -1,28 +1,6 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('hn-theme') || 'dark');</script>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ feed.preset.label }} · HN Browser</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ff6600'/%3E%3C/svg%3E">
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="/static/theme.js" defer></script>
-</head>
-<body>
-    <nav class="nav">
-        <div class="wrap nav-inner">
-            <a class="brand" href="/">
-                <span class="dot"></span>
-                <span>HN&nbsp;BROWSER<small>what's hot right now</small></span>
-            </a>
-            <div class="tabs">
-                {% for p in presets %}<a class="tab{% if p.key == feed.preset.key %} active{% endif %}" href="/{{ p.key }}">{{ p.label }}</a>{% endfor %}
-            </div>
-            <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◑</button>
-        </div>
-    </nav>
-
+{% extends "base.html" %}
+{% block title %}{{ feed.preset.label }} · HN Browser{% endblock %}
+{% block content %}
     <header class="hero">
         <div class="wrap">
             <span class="hero-tag">Hacker News · ranked by activity</span>
@@ -51,11 +29,11 @@
                 <li class="story rank-{{ r.rank }}">
                     <span class="rank">{{ r.rank }}</span>
                     <div class="story-body">
-                        <a class="title" href="{{ r.story.url or (r.story.id | hn_url) }}">{{ r.story.title }}</a>
+                        <a class="title" href="{{ r.story.url or ('/story/' ~ r.story.id) }}">{{ r.story.title }}</a>
                         <div class="meta">
                             <span class="domain">{{ r.story.url | domain }}</span>
                             <span>{{ r.story.points }} points</span>
-                            <a href="{{ r.story.id | hn_url }}">{{ r.story.num_comments }} comments</a>
+                            <a href="/story/{{ r.story.id }}">{{ r.story.num_comments }} comments</a>
                             <span>{{ age(r.story.created_at) }}</span>
                             <span>by {{ r.story.author }}</span>
                         </div>
@@ -70,10 +48,5 @@
                 {% endfor %}
             </ol>
         </section>
-        <footer class="foot">
-            Data from the <a href="https://hn.algolia.com/api">Algolia Hacker News Search API</a>. Every story links back to
-            <a href="https://news.ycombinator.com">Hacker News</a>. Refreshes every few minutes.
-        </footer>
     </main>
-</body>
-</html>
+{% endblock %}

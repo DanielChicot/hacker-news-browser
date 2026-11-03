@@ -150,3 +150,58 @@ async def test_stories_by_ids_with_no_ids_makes_no_request():
 
     assert await client.stories_by_ids([]) == []
     assert calls == []
+
+
+def item(id, type="comment", text="<p>hi</p>", children=(), **extra):
+    base = {
+        "id": id,
+        "type": type,
+        "author": "ann",
+        "text": text,
+        "created_at_i": 1_800_000_000,
+        "children": list(children),
+    }
+    base.update(extra)
+    return base
+
+
+async def test_thread_parses_story_and_nested_comments():
+    seen = {}
+
+    def handler(req):
+        seen["path"] = req.url.path
+        return item(
+            7,
+            type="story",
+            text=None,
+            title="A story",
+            url="https://example.com/a",
+            points=55,
+            children=[item(8, children=[item(9, text="<p>reply</p>")]), item(10, text=None)],
+        )
+
+    thread = await algolia(handler).thread(7)
+
+    assert seen["path"] == "/api/v1/items/7"
+    assert thread.story == Story(7, "A story", "https://example.com/a", "ann", 55, 3, 1_800_000_000)
+    assert [c.id for c in thread.comments] == [8, 10]
+    assert thread.comments[0].children[0].text_html == "<p>reply</p>"
+    assert thread.comments[1].text_html is None
+
+
+async def test_thread_counts_only_comments_not_the_story():
+    client = algolia(lambda req: item(1, type="story", text=None, title="t", points=1, children=[item(2), item(3)]))
+
+    thread = await client.thread(1)
+
+    assert thread.story.num_comments == 2
+
+
+async def test_thread_raises_not_found_for_missing_item():
+    transport = httpx.MockTransport(lambda req: httpx.Response(404, json={"error": "not found"}))
+    client = HackerNewsClient(httpx.AsyncClient(transport=transport))
+
+    from hn_browser.hn_client import ItemNotFound
+
+    with pytest.raises(ItemNotFound):
+        await client.thread(123)
