@@ -27,6 +27,11 @@ def test_domain_of_strips_www_and_keeps_github_owner(url, expected):
         (5 * 3600 + 1800, "5h ago"),
         (26 * 3600, "1d ago"),
         (3 * 86400, "3d ago"),
+        (29 * 86400, "29d ago"),
+        (30 * 86400, "1mo ago"),
+        (11 * 30 * 86400, "11mo ago"),
+        (365 * 86400, "1y ago"),
+        (2064 * 86400, "5y ago"),
     ],
 )
 def test_age_label_rounds_down_to_the_largest_unit(seconds_ago, expected):

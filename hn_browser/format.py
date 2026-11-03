@@ -26,7 +26,12 @@ def age_label(created_at: int, now: int) -> str:
         return f"{seconds // 60}m ago"
     if seconds < 86400:
         return f"{seconds // 3600}h ago"
-    return f"{seconds // 86400}d ago"
+    days = seconds // 86400
+    if days < 30:
+        return f"{days}d ago"
+    if days < 365:
+        return f"{days // 30}mo ago"
+    return f"{days // 365}y ago"
 
 
 def hn_item_url(story_id: int) -> str:

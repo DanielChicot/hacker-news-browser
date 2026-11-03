@@ -205,3 +205,21 @@ async def test_thread_raises_not_found_for_missing_item():
 
     with pytest.raises(ItemNotFound):
         await client.thread(123)
+
+
+@pytest.mark.parametrize("newest_first, expected_path", [(False, "/api/v1/search"), (True, "/api/v1/search_by_date")])
+async def test_search_stories_sends_query_with_story_tag(newest_first, expected_path):
+    seen = {}
+
+    def handler(req):
+        seen["path"] = req.url.path
+        seen["qs"] = parse_qs(req.url.query.decode())
+        return {"hits": [story_hit(3), story_hit(4)]}
+
+    stories = await algolia(handler).search_stories("rust grep", newest_first=newest_first)
+
+    assert seen["path"] == expected_path
+    assert seen["qs"]["query"] == ["rust grep"]
+    assert seen["qs"]["tags"] == ["story"]
+    assert seen["qs"]["hitsPerPage"] == ["100"]
+    assert [s.id for s in stories] == [3, 4]

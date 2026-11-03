@@ -26,23 +26,7 @@
             </div>
             <ol class="stories">
                 {% for r in feed.ranked %}
-                <li class="story rank-{{ r.rank }}">
-                    <span class="rank">{{ r.rank }}</span>
-                    <div class="story-body">
-                        <a class="title" href="{{ r.story.url or ('/story/' ~ r.story.id) }}">{{ r.story.title }}</a>
-                        <div class="meta">
-                            <span class="domain">{{ r.story.url | domain }}</span>
-                            <span>{{ r.story.points }} points</span>
-                            <a href="/story/{{ r.story.id }}">{{ r.story.num_comments }} comments</a>
-                            <span>{{ age(r.story.created_at) }}</span>
-                            <span>by {{ r.story.author }}</span>
-                        </div>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-value">{{ r.metric | int if r.metric == r.metric | int else r.metric }}</span>
-                        <span class="metric-label">{{ feed.preset.metric_label }}</span>
-                    </div>
-                </li>
+                {% with story=r.story, rank=r.rank, metric=(r.metric | int if r.metric == r.metric | int else r.metric), metric_label=feed.preset.metric_label %}{% include "_story_row.html" %}{% endwith %}
                 {% else %}
                 <li class="empty">Nothing to show right now.</li>
                 {% endfor %}

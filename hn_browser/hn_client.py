@@ -15,6 +15,7 @@ from hn_browser.thread import Comment, Thread, count_comments
 
 ALGOLIA_BASE_URL = "https://hn.algolia.com/api/v1"
 PAGE_SIZE = 1000
+SEARCH_PAGE_SIZE = 100
 DEFAULT_MAX_COMMENT_PAGES = 6
 
 
@@ -112,6 +113,14 @@ class HackerNewsClient:
                 break
             before = min(int(h["created_at_i"]) for h in hits)
         return ids
+
+    async def search_stories(self, query: str, newest_first: bool = False) -> list[Story]:
+        """Full-text search over stories, in Algolia's relevance or date order."""
+        data = await self._get(
+            "search_by_date" if newest_first else "search",
+            {"query": query, "tags": "story", "hitsPerPage": SEARCH_PAGE_SIZE},
+        )
+        return [_story_from_hit(h) for h in data["hits"]]
 
     async def stories_by_ids(self, ids: Iterable[int]) -> list[Story]:
         ids = list(ids)

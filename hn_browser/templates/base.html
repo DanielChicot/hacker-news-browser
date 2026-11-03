@@ -19,6 +19,9 @@
             <div class="tabs">
                 {% for p in presets %}<a class="tab{% if p.key == active_preset %} active{% endif %}" href="/{{ p.key }}">{{ p.label }}</a>{% endfor %}
             </div>
+            <form class="search" action="/search" method="get" role="search">
+                <input type="search" name="q" value="{{ query }}" placeholder="Search stories…" aria-label="Search Hacker News" autocomplete="off">
+            </form>
             <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◑</button>
         </div>
     </nav>

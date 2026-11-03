@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{% if query %}{{ query }} · {% endif %}Search · HN Browser{% endblock %}
+{% block content %}
+    <header class="hero hero-story">
+        <div class="wrap">
+            <span class="hero-tag">Search Hacker News</span>
+            {% if query %}
+            <h1 class="story-title">“{{ query }}”</h1>
+            <div class="pills">
+                {% for s in sorts %}<a class="pill{% if s.key == active_sort %} active{% endif %}" href="/search?q={{ query | urlencode }}&amp;sort={{ s.key }}">{{ s.label }}</a>{% endfor %}
+            </div>
+            {% else %}
+            <h1 class="story-title">Search Hacker News</h1>
+            <p class="hero-sub">Full-text search over every story ever posted, via the Algolia HN Search API.</p>
+            {% endif %}
+        </div>
+    </header>
+
+    <main class="wrap">
+        {% if query %}
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Results</h2>
+                <span class="muted">{{ results | length }} stories · best 100 matches, ordered by {{ (sorts | selectattr("key", "equalto", active_sort) | first).label | lower }}</span>
+            </div>
+            <ol class="stories">
+                {% for story in results %}
+                {% with story=story, rank=loop.index %}{% include "_story_row.html" %}{% endwith %}
+                {% else %}
+                <li class="empty">No stories match “{{ query }}”.</li>
+                {% endfor %}
+            </ol>
+        </section>
+        {% endif %}
+    </main>
+{% endblock %}

@@ -1,0 +1,19 @@
+<li class="story{% if rank %} rank-{{ rank }}{% endif %}">
+    <span class="rank">{{ rank or "" }}</span>
+    <div class="story-body">
+        <a class="title" href="{{ story.url or ('/story/' ~ story.id) }}">{{ story.title }}</a>
+        <div class="meta">
+            <span class="domain">{{ story.url | domain }}</span>
+            <span>{{ story.points }} points</span>
+            <a href="/story/{{ story.id }}">{{ story.num_comments }} comments</a>
+            <span>{{ age(story.created_at) }}</span>
+            <span>by {{ story.author }}</span>
+        </div>
+    </div>
+    {% if metric is defined %}
+    <div class="metric">
+        <span class="metric-value">{{ metric }}</span>
+        <span class="metric-label">{{ metric_label }}</span>
+    </div>
+    {% endif %}
+</li>

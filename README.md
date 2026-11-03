@@ -22,6 +22,13 @@ from Algolia's `/items/{id}` tree. Comment bodies are sanitised to the small set
 of tags HN itself emits, deleted leaf comments are dropped, and every comment
 has a `#` link to its position on Hacker News.
 
+## Search
+
+The search box in the nav opens `/search?q=…`, a full-text search over every
+story via Algolia. Results can be ordered by relevance, newest, most points or
+most comments. Algolia itself only ranks by relevance or date, so the points and
+comments orderings are applied to the 100 best matches it returns.
+
 ## How a request is served
 
 ```mermaid
@@ -99,11 +106,12 @@ hn_browser/
   hn_client.py  Algolia HN Search API client
   snapshot.py   one combined fetch of stories and recent comments
   feed.py       presets, stats, and Feed assembly
+  search.py     orderings for search results
   cache.py      single-value TTL cache with stale-on-error
   thread.py     comment tree model, HTML sanitiser, deleted-comment pruning
   format.py     display helpers (domain, age, HN links)
   app.py        FastAPI routes and wiring
-  templates/    Jinja2 pages (base layout, feed, story thread)
+  templates/    Jinja2 pages (base layout, feed, story thread, search, shared story row)
   static/       stylesheet and theme toggle
 tests/          pytest, parameterised where there are several cases
 ```
