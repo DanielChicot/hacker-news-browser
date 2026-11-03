@@ -66,3 +66,31 @@ def test_build_feed_stats_summarise_the_snapshot():
     ]
     assert feed.stats[1].sub == "Story 3"
     assert feed.stats[2].sub == "Story 1"
+
+
+OLD_BUT_BUSY = story(9, points=900, num_comments=900, age_hours=40)
+SNAPSHOT_WITH_BACKFILL = Snapshot(
+    now=NOW,
+    stories=SNAPSHOT.stories + [OLD_BUT_BUSY],
+    comment_story_ids=[9, 9, 9, 9, 3],
+)
+
+
+@pytest.mark.parametrize("preset", ["discussed", "top", "rising"])
+def test_24h_presets_exclude_stories_older_than_the_window(preset):
+    feed = build_feed(SNAPSHOT_WITH_BACKFILL, preset)
+
+    assert 9 not in [r.story.id for r in feed.ranked]
+
+
+def test_hot_preset_keeps_older_stories_that_are_being_discussed():
+    feed = build_feed(SNAPSHOT_WITH_BACKFILL, "hot")
+
+    assert [r.story.id for r in feed.ranked][0] == 9
+
+
+def test_stats_about_today_ignore_backfilled_older_stories():
+    feed = build_feed(SNAPSHOT_WITH_BACKFILL, "hot")
+
+    assert feed.stats[2].value == 300  # top points today, not the 900 from two days ago
+    assert feed.stats[3].value == 2

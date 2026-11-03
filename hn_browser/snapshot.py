@@ -20,8 +20,14 @@ class StorySource(Protocol):
 @dataclass(frozen=True)
 class Snapshot:
     now: int
-    stories: list[Story]
+    stories: list[Story]  # the last 24h plus any older stories still being discussed
     comment_story_ids: list[int]
+
+    @property
+    def todays_stories(self) -> list[Story]:
+        """Only stories created inside the story window, for the 'today' presets."""
+        cutoff = self.now - STORY_WINDOW_HOURS * HOUR_SECONDS
+        return [s for s in self.stories if s.created_at > cutoff]
 
 
 async def load_snapshot(

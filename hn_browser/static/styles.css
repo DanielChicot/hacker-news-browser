@@ -10,8 +10,8 @@
   --ink: #eef2ee;
   --ink-dim: #98a2ad;
   --ink-faint: #5d6770;
-  --accent: #c8f135;
-  --accent-soft: rgba(200, 241, 53, 0.14);
+  --accent: #ff6600;
+  --accent-soft: rgba(255, 102, 0, 0.16);
   --accent-ink: #0a0c0e;
   --gold: #ffc94d;
   --silver: #d3dbe6;
@@ -35,7 +35,8 @@
   --ink: #14181c;
   --ink-dim: #555e67;
   --ink-faint: #919aa2;
-  --accent-soft: rgba(120, 150, 0, 0.16);
+  --accent: #e55a00;
+  --accent-soft: rgba(229, 90, 0, 0.14);
   --shadow: 0 24px 50px -30px rgba(20, 24, 28, 0.45);
 }
 
@@ -50,8 +51,8 @@ body {
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
   background-image:
-    radial-gradient(120% 80% at 100% -10%, rgba(200, 241, 53, 0.10), transparent 55%),
-    radial-gradient(80% 60% at -10% 100%, rgba(200, 241, 53, 0.05), transparent 60%);
+    radial-gradient(120% 80% at 100% -10%, rgba(255, 102, 0, 0.12), transparent 55%),
+    radial-gradient(80% 60% at -10% 100%, rgba(255, 102, 0, 0.06), transparent 60%);
   background-attachment: fixed;
 }
 

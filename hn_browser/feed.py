@@ -56,21 +56,21 @@ PRESETS: dict[str, Preset] = {
             "Discussed today",
             "Stories from the last 24 hours with the most comments overall.",
             "comments",
-            lambda s: rank_discussed(s.stories),
+            lambda s: rank_discussed(s.todays_stories),
         ),
         Preset(
             "top",
             "Top today",
             "Stories from the last 24 hours with the most points.",
             "points",
-            lambda s: rank_top(s.stories),
+            lambda s: rank_top(s.todays_stories),
         ),
         Preset(
             "rising",
             "Rising",
             "Points per hour of age, so fast climbers beat old giants.",
             "points/hour",
-            lambda s: rank_rising(s.stories, now=s.now),
+            lambda s: rank_rising(s.todays_stories, now=s.now),
         ),
     ]
 }
@@ -79,12 +79,13 @@ PRESETS: dict[str, Preset] = {
 def _stats(snapshot: Snapshot) -> list[Stat]:
     by_id = {s.id: s for s in snapshot.stories}
     hottest_id, hottest_count = (Counter(snapshot.comment_story_ids).most_common(1) or [(None, 0)])[0]
-    top = max(snapshot.stories, key=lambda s: s.points, default=None)
+    today = snapshot.todays_stories
+    top = max(today, key=lambda s: s.points, default=None)
     return [
         Stat(f"Comments in {HOT_WINDOW_HOURS}h", len(snapshot.comment_story_ids)),
         Stat("Hottest thread", hottest_count, by_id[hottest_id].title if hottest_id in by_id else ""),
         Stat("Top points today", top.points if top else 0, top.title if top else ""),
-        Stat(f"Over {NOTABLE_POINTS} points", sum(s.points >= NOTABLE_POINTS for s in snapshot.stories)),
+        Stat(f"Over {NOTABLE_POINTS} points", sum(s.points >= NOTABLE_POINTS for s in today)),
     ]
 
 
