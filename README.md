@@ -63,11 +63,28 @@ uv run pytest
 Tests never touch the network: the ranking functions are pure, and the API client
 is tested through an httpx mock transport.
 
-## Deploy to Render
+## Deploy to Render (free tier)
 
-`render.yaml` describes a free-tier web service. Connect the repository in the
-Render dashboard as a Blueprint and it deploys from `main`. The free instance spins
-down after 15 idle minutes; the first request afterwards takes about a minute.
+The app ships as a Docker web service, the same shape as Map Tappers.
+`Dockerfile` installs dependencies from `uv.lock` and binds to Render's injected
+`$PORT`; `render.yaml` describes the free-tier service.
+
+```mermaid
+flowchart LR
+    push["git push main"] --> render["Render builds the image"]
+    render --> live["Service live at the Render URL"]
+```
+
+One-time setup:
+
+1. Push this repository to GitHub or GitLab (Render cannot pull from Codeberg).
+2. In the Render dashboard choose **New → Blueprint** and pick the repository.
+   Render reads `render.yaml` and provisions the service.
+3. Every later push to `main` redeploys automatically.
+
+The free instance spins down after 15 idle minutes; the first request after
+that takes up to a minute. There is no database and no cron job, so nothing
+else to configure.
 
 ## Layout
 

@@ -1,0 +1,9 @@
+.venv
+.git
+.pytest_cache
+.playwright-mcp
+.remember
+__pycache__
+*.pyc
+tests
+claudedocs
