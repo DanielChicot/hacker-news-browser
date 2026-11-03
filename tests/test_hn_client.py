@@ -77,23 +77,44 @@ async def test_stories_since_tolerates_missing_fields(
     )
 
 
-async def test_comment_story_ids_since_follows_every_page():
-    pages = {
-        0: {"hits": [{"story_id": 10}, {"story_id": 10}], "nbPages": 3, "page": 0},
-        1: {"hits": [{"story_id": 11}], "nbPages": 3, "page": 1},
-        2: {"hits": [{"story_id": 10}], "nbPages": 3, "page": 2},
-    }
-    requested = []
+def comment_hits(story_id, created_ats):
+    return [{"story_id": story_id, "created_at_i": c} for c in created_ats]
+
+
+async def test_comment_story_ids_since_pages_with_a_time_cursor_not_page_numbers():
+    """Algolia silently caps page-number paging at 1000 hits, so page by created_at_i."""
+    filters_seen = []
 
     def handler(req):
         qs = parse_qs(req.url.query.decode())
-        requested.append((req.url.path, qs["tags"][0], qs["numericFilters"][0]))
-        return pages[int(qs.get("page", ["0"])[0])]
+        per_page = int(qs["hitsPerPage"][0])
+        filters_seen.append(qs["numericFilters"][0])
+        assert "page" not in qs
+        if len(filters_seen) == 1:
+            return {"hits": comment_hits(10, range(5000, 5000 - per_page, -1))}
+        if len(filters_seen) == 2:
+            return {"hits": comment_hits(11, range(4000, 4000 - per_page, -1))}
+        return {"hits": comment_hits(12, [3000])}  # short page: stop after this
 
     ids = await algolia(handler).comment_story_ids_since(since=123)
 
-    assert ids == [10, 10, 11, 10]
-    assert requested == [("/api/v1/search_by_date", "comment", "created_at_i>123")] * 3
+    assert filters_seen == [
+        "created_at_i>123",
+        f"created_at_i>123,created_at_i<{5000 - 999}",
+        f"created_at_i>123,created_at_i<{4000 - 999}",
+    ]
+    assert ids.count(10) == 1000 and ids.count(11) == 1000 and ids.count(12) == 1
+
+
+async def test_comment_story_ids_since_stops_on_empty_page():
+    calls = []
+
+    def handler(req):
+        calls.append(1)
+        return {"hits": []}
+
+    assert await algolia(handler).comment_story_ids_since(since=0) == []
+    assert len(calls) == 1
 
 
 async def test_comment_story_ids_since_stops_at_page_cap_to_respect_rate_limit():
@@ -101,7 +122,8 @@ async def test_comment_story_ids_since_stops_at_page_cap_to_respect_rate_limit()
 
     def handler(req):
         calls.append(1)
-        return {"hits": [{"story_id": 1}], "nbPages": 50, "page": len(calls) - 1}
+        per_page = int(parse_qs(req.url.query.decode())["hitsPerPage"][0])
+        return {"hits": comment_hits(1, range(10_000 - len(calls) * per_page, 0, -1)[:per_page])}
 
     await algolia(handler).comment_story_ids_since(since=0, max_pages=4)
 

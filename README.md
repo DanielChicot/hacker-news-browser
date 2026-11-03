@@ -45,6 +45,15 @@ uv run uvicorn hn_browser.app:app --reload
 
 Then open <http://127.0.0.1:8000>.
 
+Behind a TLS-intercepting corporate proxy, Python will reject Algolia's certificate.
+Point it at the macOS trust store for the local run:
+
+```sh
+security find-certificate -a -p /Library/Keychains/System.keychain \
+  /System/Library/Keychains/SystemRootCertificates.keychain > /tmp/certs.pem
+SSL_CERT_FILE=/tmp/certs.pem uv run uvicorn hn_browser.app:app --reload
+```
+
 ## Test
 
 ```sh

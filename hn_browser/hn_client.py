@@ -56,23 +56,27 @@ class HackerNewsClient:
     async def comment_story_ids_since(
         self, since: int, max_pages: int = DEFAULT_MAX_COMMENT_PAGES
     ) -> list[int]:
-        """The story id of every comment posted after `since`, one entry per comment."""
+        """The story id of every comment posted after `since`, one entry per comment.
+
+        Algolia silently caps page-number paging at 1000 hits, so this walks
+        backwards in time instead: each page asks for comments older than the
+        oldest one seen so far, and stops at the first short page.
+        """
         ids: list[int] = []
-        page = 0
-        while page < max_pages:
+        before: int | None = None
+        for _ in range(max_pages):
+            filters = f"created_at_i>{since}"
+            if before is not None:
+                filters += f",created_at_i<{before}"
             data = await self._get(
                 "search_by_date",
-                {
-                    "tags": "comment",
-                    "numericFilters": f"created_at_i>{since}",
-                    "hitsPerPage": PAGE_SIZE,
-                    "page": page,
-                },
+                {"tags": "comment", "numericFilters": filters, "hitsPerPage": PAGE_SIZE},
             )
-            ids.extend(int(h["story_id"]) for h in data["hits"] if h.get("story_id"))
-            page += 1
-            if page >= data.get("nbPages", 1):
+            hits = data["hits"]
+            ids.extend(int(h["story_id"]) for h in hits if h.get("story_id"))
+            if len(hits) < PAGE_SIZE:
                 break
+            before = min(int(h["created_at_i"]) for h in hits)
         return ids
 
     async def stories_by_ids(self, ids: Iterable[int]) -> list[Story]:
