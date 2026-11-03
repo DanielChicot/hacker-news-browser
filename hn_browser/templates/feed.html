@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <script>document.documentElement.setAttribute('data-theme', localStorage.getItem('hn-theme') || 'dark');</script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ feed.preset.label }} · HN Browser</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/theme.js" defer></script>
+</head>
+<body>
+    <nav class="nav">
+        <div class="wrap nav-inner">
+            <a class="brand" href="/">
+                <span class="dot"></span>
+                <span>HN&nbsp;BROWSER<small>what's hot right now</small></span>
+            </a>
+            <div class="tabs">
+                {% for p in presets %}<a class="tab{% if p.key == feed.preset.key %} active{% endif %}" href="/{{ p.key }}">{{ p.label }}</a>{% endfor %}
+            </div>
+            <button class="theme-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">◑</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="wrap">
+            <span class="hero-tag">Hacker News · ranked by activity</span>
+            <h1><span class="out">{{ feed.preset.label.split(' ')[0] }}</span> <span class="em">{{ feed.preset.label.split(' ')[1:] | join(' ') }}</span></h1>
+            <p class="hero-sub">{{ feed.preset.blurb }}</p>
+            <div class="stat-row">
+                {% for stat in feed.stats %}
+                <div class="stat">
+                    <div class="label">{{ stat.label }}</div>
+                    <div class="value">{{ stat.value }}</div>
+                    <div class="sub" title="{{ stat.sub }}">{{ stat.sub }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <section class="panel">
+            <div class="panel-head">
+                <h2>{{ feed.preset.label }}</h2>
+                <span class="muted">{{ feed.ranked | length }} stories · metric: {{ feed.preset.metric_label }}</span>
+            </div>
+            <ol class="stories">
+                {% for r in feed.ranked %}
+                <li class="story rank-{{ r.rank }}">
+                    <span class="rank">{{ r.rank }}</span>
+                    <div class="story-body">
+                        <a class="title" href="{{ r.story.url or (r.story.id | hn_url) }}">{{ r.story.title }}</a>
+                        <div class="meta">
+                            <span class="domain">{{ r.story.url | domain }}</span>
+                            <span>{{ r.story.points }} points</span>
+                            <a href="{{ r.story.id | hn_url }}">{{ r.story.num_comments }} comments</a>
+                            <span>{{ age(r.story.created_at) }}</span>
+                            <span>by {{ r.story.author }}</span>
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-value">{{ r.metric | int if r.metric == r.metric | int else r.metric }}</span>
+                        <span class="metric-label">{{ feed.preset.metric_label }}</span>
+                    </div>
+                </li>
+                {% else %}
+                <li class="empty">Nothing to show right now.</li>
+                {% endfor %}
+            </ol>
+        </section>
+        <footer class="foot">
+            Data from the <a href="https://hn.algolia.com/api">Algolia Hacker News Search API</a>. Every story links back to
+            <a href="https://news.ycombinator.com">Hacker News</a>. Refreshes every few minutes.
+        </footer>
+    </main>
+</body>
+</html>

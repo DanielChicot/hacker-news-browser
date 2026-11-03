@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: hn-browser
+    runtime: python
+    plan: free
+    buildCommand: pip install uv && uv sync --no-dev --frozen
+    startCommand: uv run uvicorn hn_browser.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /hot
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
